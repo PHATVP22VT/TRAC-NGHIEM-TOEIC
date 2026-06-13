@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>TOEIC Quiz Maker</title>
+<style>
+  /* ── TOKENS ── */
+  :root {
+    --bg:        #0f1117;
+    --surface:   #1a1d27;
+    --card:      #22263a;
+    --border:    #2e3250;
+    --text:      #e8eaf6;
+    --muted:     #7c82a8;
+    --accent:    #5c6bc0;
+
+    --opt-a:     #1565c0;   /* blue */
+    --opt-a-bg:  #0d2a5e;
+    --opt-b:     #c62828;   /* red */
+    --opt-b-bg:  #5c1010;
+    --opt-c:     #f9a825;   /* yellow */
+    --opt-c-bg:  #4a3000;
+    --opt-d:     #e65100;   /* orange */
+    --opt-d-bg:  #5a1d00;
+
+    --green:     #43a047;
+    --green-bg:  #1b3a1c;
+    --red:       #e53935;
+    --red-bg:    #3a1212;
+
+    --radius:    12px;
+    --font:      'Segoe UI', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    font-size: 16px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: var(--text);
+  }
+  .logo span { color: var(--accent); }
+  .key-pill {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 6px 14px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    cursor: pointer;
+    transition: border-color .2s;
+    white-space: nowrap;
+  }
+  .key-pill:hover { border-color: var(--accent); color: var(--text); }
+  .key-pill.active { border-color: var(--green); color: var(--green); }
+
+  /* ── SCREENS ── */
+  .screen { display: none; padding: 20px; max-width: 700px; margin: 0 auto; }
+  .screen.active { display: block; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 12px 20px;
+    border-radius: 9px;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s;
+    width: 100%;
+    margin-bottom: 10px;
+    font-family: var(--font);
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary  { background: var(--accent); color: #fff; }
+  .btn-green    { background: var(--green);  color: #fff; }
+  .btn-danger   { background: var(--red);    color: #fff; }
+  .btn-ghost    { background: var(--card);   color: var(--text); border: 1px solid var(--border); }
+  .btn-orange   { background: #e65100;       color: #fff; }
+  .btn-purple   { background: #7b1fa2;       color: #fff; }
+  .btn-sm {
+    padding: 7px 14px;
+    font-size: 0.82rem;
+    width: auto;
+    margin-bottom: 0;
+    border-radius: 7px;
+  }
+
+  /* ── INPUTS ── */
+  textarea, input[type=text], input[type=password] {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    color: var(--text);
+    padding: 12px 14px;
+    font-size: 0.93rem;
+    font-family: var(--font);
+    resize: vertical;
+    outline: none;
+    transition: border-color .2s;
+    line-height: 1.5;
+  }
+  textarea:focus, input:focus { border-color: var(--accent); }
+  textarea { min-height: 140px; }
+
+  /* ── HOME ── */
+  .home-hero {
+    text-align: center;
+    padding: 36px 0 28px;
+  }
+  .home-hero h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+  }
+  .home-hero h1 span { color: var(--accent); }
+  .home-hero p { color: var(--muted); font-size: 0.9rem; margin-bottom: 28px; }
+
+  /* ── QUIZ LIST ── */
+  .quiz-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: border-color .2s;
+  }
+  .quiz-item:hover { border-color: var(--accent); }
+  .quiz-item-info { flex: 1; }
+  .quiz-item-title { font-weight: 600; font-size: 0.95rem; }
+  .quiz-item-meta  { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  .quiz-item-actions { display: flex; gap: 6px; }
+
+  /* ── PROGRESS ── */
+  .progress-bar-wrap {
+    background: var(--card);
+    border-radius: 99px;
+    height: 6px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    transition: width .3s;
+  }
+  .progress-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-align: right;
+    margin-bottom: 4px;
+  }
+
+  /* ── QUESTION ── */
+  .question-text {
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.55;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+
+  /* ── OPTION BUTTONS ── */
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  @media (max-width: 480px) {
+    .options-grid { grid-template-columns: 1fr; }
+  }
+
+  .opt-btn {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    text-align: left;
+    font-size: 0.9rem;
+    font-family: var(--font);
+    line-height: 1.45;
+    transition: all .15s;
+    background: var(--card);
+    color: var(--text);
+    width: 100%;
+  }
+  .opt-btn:active { transform: scale(0.97); }
+
+  /* Base colors per letter */
+  .opt-btn[data-opt="A"] { border-color: var(--opt-a); }
+  .opt-btn[data-opt="B"] { border-color: var(--opt-b); }
+  .opt-btn[data-opt="C"] { border-color: var(--opt-c); }
+  .opt-btn[data-opt="D"] { border-color: var(--opt-d); }
+
+  /* Selected (not yet submitted) */
+  .opt-btn[data-opt="A"].selected { background: var(--opt-a-bg); border-color: var(--opt-a); color: #90caf9; }
+  .opt-btn[data-opt="B"].selected { background: var(--opt-b-bg); border-color: var(--opt-b); color: #ef9a9a; }
+  .opt-btn[data-opt="C"].selected { background: var(--opt-c-bg); border-color: var(--opt-c); color: #fff176; }
+  .opt-btn[data-opt="D"].selected { background: var(--opt-d-bg); border-color: var(--opt-d); color: #ffcc80; }
+
+  /* Review states */
+  .opt-btn.correct  { background: var(--green-bg); border-color: var(--green); color: #a5d6a7; }
+  .opt-btn.wrong    { background: var(--red-bg);   border-color: var(--red);   color: #ef9a9a; }
+  .opt-btn.disabled { opacity: 0.45; cursor: default; }
+
+  .opt-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.82rem;
+    flex-shrink: 0;
+  }
+  .opt-btn[data-opt="A"] .opt-badge { background: var(--opt-a); color: #fff; }
+  .opt-btn[data-opt="B"] .opt-badge { background: var(--opt-b); color: #fff; }
+  .opt-btn[data-opt="C"] .opt-badge { background: rgba(249,168,37,.9); color: #1a1000; }
+  .opt-btn[data-opt="D"] .opt-badge { background: var(--opt-d); color: #fff; }
+
+  /* ── NAV ROW ── */
+  .nav-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .nav-row .btn { margin-bottom: 0; }
+
+  /* ── SCORE CARD ── */
+  .score-display {
+    text-align: center;
+    padding: 28px 0;
+  }
+  .score-big {
+    font-size: 3.5rem;
+    font-weight: 800;
+    letter-spacing: -2px;
+    color: var(--accent);
+  }
+  .score-label { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
+
+  /* ── REVIEW ── */
+  .review-q {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .review-q-header {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text);
+    line-height: 1.45;
+  }
+  .badge-correct { color: var(--green); font-size: 0.78rem; font-weight: 700; margin-left: 6px; }
+  .badge-wrong   { color: var(--red);   font-size: 0.78rem; font-weight: 700; margin-left: 6px; }
+
+  /* ── EDIT ── */
+  .edit-q-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .edit-q-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .edit-q-num {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--accent);
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+  .edit-q-text { flex: 1; font-size: 0.9rem; line-height: 1.45; }
+  .edit-q-opts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+  .edit-opt-tag {
+    font-size: 0.75rem;
+    padding: 3px 9px;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .edit-opt-tag.correct-tag { border-color: var(--green); color: var(--green); font-weight: 700; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.7);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px 18px 0 0;
+    padding: 24px 20px 36px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp .25s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(60px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+  .modal h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 14px; }
+  .modal-content { font-size: 0.93rem; line-height: 1.65; color: var(--text); white-space: pre-wrap; }
+  .close-btn {
+    position: absolute;
+    right: 18px;
+    top: 18px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--muted); font-size: 1rem;
+  }
+
+  /* ── LABEL ── */
+  label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .field { margin-bottom: 14px; }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 0.88rem;
+    z-index: 999;
+    transition: transform .25s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: var(--green); color: var(--green); }
+  .toast.error   { border-color: var(--red);   color: var(--red);   }
+
+  /* ── UTILS ── */
+  .flex-row { display: flex; gap: 10px; align-items: center; }
+  .gap-sm    { gap: 8px; }
+  .mt-sm     { margin-top: 10px; }
+  .mt-md     { margin-top: 18px; }
+  .spinner   { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* scroll edit list */
+  #edit-list { max-height: 55vh; overflow-y: auto; padding-right: 2px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">TOEIC <span>Quiz</span></div>
+  <div class="key-pill" id="key-pill" onclick="showKeyModal()">⚙️ API Key</div>
+</header>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  SCREEN: HOME                                      -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="screen active" id="screen-home">
+  <div class="home-hero">
+    <h1>TOEIC <span>Quiz Maker</span></h1>
+    <p>Tạo, lưu và luyện tập quiz TOEIC mọi lúc mọi nơi</p>
+  </div>
+
+  <button class="btn btn-green" onclick="showScreen('input')">➕ Tạo Quiz Mới</button>
+  <button class="btn btn-ghost" onclick="loadQuizList()">📂 Quiz Đã Lưu</button>
+
+  <div id="quiz-list-section" style="display:none; margin-top:10px;">
+    <div class="section-title">Quiz đã lưu</div>
+    <div id="quiz-list"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  SCREEN: INPUT                                     -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="screen" id="screen-input">
+  <div class="flex-row" style="margin-bottom:16px;">
+    <button class="btn btn-ghost btn-sm" onclick="showScreen('home')">← Về trang chủ</button>
+    <span style="font-weight:700; font-size:1rem;">Tạo Quiz Mới</span>
+  </div>
+  <div class="card">
+    <div class="field">
+      <label>Tên quiz</label>
+      <input type="text" id="quiz-title" placeholder="Ví dụ: TOEIC Grammar Unit 5" value="Quiz TOEIC">
+    </div>
+    <div class="field">
+      <label>Dán nội dung câu hỏi</label>
+      <textarea id="quiz-text" placeholder="1. The manager _____ the report yesterday. (A) review (B) reviewed (C) reviewing (D) reviews ; (B) reviewed&#10;2. ..."></textarea>
+    </div>
+    <div style="font-size:0.78rem; color:var(--muted); margin-bottom:14px; line-height:1.5;">
+      📌 Định dạng: <code style="background:var(--card);padding:2px 6px;border-radius:4px;">1. [Câu hỏi] (A) ... (B) ... (C) ... (D) ... ; (B) đáp án</code>
+    </div>
+    <button class="btn btn-green" onclick="parseAndStart()">▶ Bắt đầu Quiz</button>
+    <button class="btn btn-ghost" onclick="showScreen('home')">Hủy</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  SCREEN: QUIZ                                      -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="screen" id="screen-quiz">
+  <div class="flex-row" style="margin-bottom:14px;">
+    <button class="btn btn-ghost btn-sm" onclick="confirmExit()">← Thoát</button>
+    <div style="flex:1; text-align:right;">
+      <span id="quiz-progress-label" class="progress-label"></span>
+    </div>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="quiz-progress-bar" style="width:0%"></div>
+  </div>
+
+  <div class="card">
+    <div class="question-text" id="quiz-question"></div>
+    <div class="options-grid" id="quiz-options"></div>
+
+    <button class="btn btn-orange btn-sm" id="hint-btn" onclick="requestHint()" style="width:auto; margin-bottom:14px;">
+      💡 Gợi ý AI
+    </button>
+
+    <div class="nav-row">
+      <button class="btn btn-ghost" id="prev-btn" onclick="prevQuestion()" style="flex:1;">← Trước</button>
+      <button class="btn btn-primary" id="next-btn" onclick="nextQuestion()" style="flex:1;">Tiếp →</button>
+      <button class="btn btn-danger" id="submit-btn" onclick="submitQuiz()" style="flex:1;display:none;">Nộp bài</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  SCREEN: RESULT                                    -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="screen" id="screen-result">
+  <div class="card">
+    <div class="score-display">
+      <div class="score-big" id="result-score">0/0</div>
+      <div class="score-label" id="result-pct"></div>
+    </div>
+  </div>
+
+  <button class="btn btn-purple" onclick="saveCurrentQuiz()">💾 Lưu Quiz</button>
+  <button class="btn btn-primary" onclick="showScreen('review')">📖 Xem lại đáp án</button>
+  <button class="btn btn-ghost" onclick="showScreen('home')">← Về trang chủ</button>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  SCREEN: REVIEW                                    -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="screen" id="screen-review">
+  <div class="flex-row" style="margin-bottom:16px;">
+    <button class="btn btn-ghost btn-sm" onclick="showScreen('result')">← Về kết quả</button>
+    <span style="font-weight:700;">Xem lại đáp án</span>
+  </div>
+  <div id="review-list"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  SCREEN: EDIT                                      -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="screen" id="screen-edit">
+  <div class="flex-row" style="margin-bottom:14px;">
+    <button class="btn btn-ghost btn-sm" onclick="showScreen('home')">← Về trang chủ</button>
+    <span style="font-weight:700; font-size:0.95rem;" id="edit-title-label">Chỉnh sửa Quiz</span>
+  </div>
+
+  <div id="edit-list"></div>
+
+  <!-- Add question -->
+  <div class="card mt-md">
+    <div class="section-title">➕ Thêm câu hỏi</div>
+    <div class="field">
+      <textarea id="new-q-text" style="min-height:80px;" placeholder="1. ... (A) ... (B) ... (C) ... (D) ... ; (A) đáp án"></textarea>
+    </div>
+    <button class="btn btn-green btn-sm" onclick="addQuestion()" style="width:100%;">✅ Thêm câu hỏi</button>
+  </div>
+
+  <button class="btn btn-primary mt-md" onclick="saveEditedQuiz()">💾 Lưu thay đổi</button>
+  <button class="btn btn-ghost" onclick="showScreen('home')">Hủy</button>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  MODAL: AI RESULT                                  -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-ai">
+  <div class="modal" style="position:relative;">
+    <span class="close-btn" onclick="closeModal('modal-ai')">✕</span>
+    <h3 id="modal-ai-title">Gợi ý</h3>
+    <div class="modal-content" id="modal-ai-content">Đang tải...</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  MODAL: API KEY                                    -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-key">
+  <div class="modal" style="position:relative;">
+    <span class="close-btn" onclick="closeModal('modal-key')">✕</span>
+    <h3>⚙️ Cấu hình API Key</h3>
+    <p style="font-size:0.83rem; color:var(--muted); margin-bottom:14px; line-height:1.5;">
+      Lấy key miễn phí tại <a href="https://aistudio.google.com" target="_blank" style="color:var(--accent);">aistudio.google.com</a>
+    </p>
+    <div class="field">
+      <label>Gemini API Key</label>
+      <input type="password" id="key-input" placeholder="AIza...">
+    </div>
+    <button class="btn btn-primary" onclick="saveKey()">Lưu key</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  MODAL: EDIT QUESTION                              -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-edit-q">
+  <div class="modal" style="position:relative;">
+    <span class="close-btn" onclick="closeModal('modal-edit-q')">✕</span>
+    <h3>✏️ Chỉnh sửa câu hỏi</h3>
+    <input type="hidden" id="edit-q-idx">
+    <div class="field">
+      <label>Nội dung câu hỏi</label>
+      <textarea id="edit-q-qtext" style="min-height:70px;"></textarea>
+    </div>
+    <div class="field"><label>Lựa chọn A</label><input type="text" id="edit-q-A"></div>
+    <div class="field"><label>Lựa chọn B</label><input type="text" id="edit-q-B"></div>
+    <div class="field"><label>Lựa chọn C</label><input type="text" id="edit-q-C"></div>
+    <div class="field"><label>Lựa chọn D</label><input type="text" id="edit-q-D"></div>
+    <div class="field">
+      <label>Đáp án đúng</label>
+      <select id="edit-q-correct" style="background:var(--card);border:1px solid var(--border);border-radius:9px;color:var(--text);padding:11px 14px;width:100%;font-size:0.93rem;font-family:var(--font);">
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+        <option value="D">D</option>
+      </select>
+    </div>
+    <button class="btn btn-green" onclick="saveEditedQuestion()">💾 Lưu câu hỏi</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+let state = {
+  questions: [],       // [{id,question_text,options:{A,B,C,D},correct_answer,user_answer}]
+  currentIdx: 0,
+  quizTitle: '',
+  quizId: null,        // saved quiz id
+  editQuizId: null,
+  editQuizTitle: '',
+  editQuestions: [],
+  hasKey: false,
+};
+
+/* ═══════════════════════════════════════════
+   SCREEN NAV
+═══════════════════════════════════════════ */
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+/* ═══════════════════════════════════════════
+   API KEY
+═══════════════════════════════════════════ */
+function showKeyModal() {
+  document.getElementById('modal-key').classList.add('open');
+}
+async function saveKey() {
+  const key = document.getElementById('key-input').value.trim();
+  if (!key) { toast('Nhập API key vào', 'error'); return; }
+  const r = await fetch('/api/set-key', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({key})
+  });
+  const d = await r.json();
+  if (d.ok) {
+    state.hasKey = true;
+    document.getElementById('key-pill').classList.add('active');
+    document.getElementById('key-pill').textContent = '✅ Key đã lưu';
+    closeModal('modal-key');
+    toast('API key đã lưu!', 'success');
+  } else {
+    toast(d.error, 'error');
+  }
+}
+
+/* ═══════════════════════════════════════════
+   QUIZ LIST (HOME)
+═══════════════════════════════════════════ */
+async function loadQuizList() {
+  const sec = document.getElementById('quiz-list-section');
+  if (sec.style.display === 'block') { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+  const r = await fetch('/api/quizzes');
+  const quizzes = await r.json();
+  const el = document.getElementById('quiz-list');
+  if (!quizzes.length) {
+    el.innerHTML = '<p style="color:var(--muted);font-size:.88rem;text-align:center;padding:20px;">Chưa có quiz nào được lưu</p>';
+    return;
+  }
+  el.innerHTML = quizzes.map(q => `
+    <div class="quiz-item">
+      <div class="quiz-item-info" onclick="playQuiz('${q.quiz_id}')">
+        <div class="quiz-item-title">${q.title}</div>
+        <div class="quiz-item-meta">${q.question_count} câu · ${q.created_date}</div>
+      </div>
+      <div class="quiz-item-actions">
+        <button class="btn btn-ghost btn-sm" onclick="editQuiz('${q.quiz_id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteQuiz('${q.quiz_id}')">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function playQuiz(quizId) {
+  const r = await fetch(`/api/load/${quizId}`);
+  const d = await r.json();
+  if (!d.ok) { toast(d.error, 'error'); return; }
+  state.questions = d.questions.map(q => ({...q, user_answer: null}));
+  state.quizTitle = d.title;
+  state.quizId = quizId;
+  state.currentIdx = 0;
+  showScreen('quiz');
+  renderQuestion();
+}
+
+async function editQuiz(quizId) {
+  const r = await fetch(`/api/load/${quizId}`);
+  const d = await r.json();
+  if (!d.ok) { toast(d.error, 'error'); return; }
+  state.editQuizId = quizId;
+  state.editQuizTitle = d.title;
+  state.editQuestions = d.questions.map(q => ({...q}));
+  renderEditScreen();
+  showScreen('edit');
+}
+
+async function deleteQuiz(quizId) {
+  if (!confirm('Xóa quiz này?')) return;
+  await fetch(`/api/delete/${quizId}`, {method:'DELETE'});
+  toast('Đã xóa quiz', 'success');
+  loadQuizList();
+}
+
+/* ═══════════════════════════════════════════
+   PARSE + START
+═══════════════════════════════════════════ */
+async function parseAndStart() {
+  const text = document.getElementById('quiz-text').value.trim();
+  const title = document.getElementById('quiz-title').value.trim() || 'Quiz TOEIC';
+  if (!text) { toast('Dán nội dung quiz vào!', 'error'); return; }
+
+  const r = await fetch('/api/parse', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({text})
+  });
+  const d = await r.json();
+  if (!d.ok) {
+    alert('Lỗi parse:\n' + d.errors.slice(0,5).join('\n'));
+    return;
+  }
+  state.questions = d.questions.map(q => ({...q, user_answer: null}));
+  state.quizTitle = title;
+  state.quizId = null;
+  state.currentIdx = 0;
+  showScreen('quiz');
+  renderQuestion();
+}
+
+/* ═══════════════════════════════════════════
+   QUIZ RENDER
+═══════════════════════════════════════════ */
+function renderQuestion() {
+  const q = state.questions[state.currentIdx];
+  const total = state.questions.length;
+  const pct = Math.round((state.currentIdx + 1) / total * 100);
+
+  document.getElementById('quiz-progress-label').textContent = `${state.currentIdx + 1} / ${total}`;
+  document.getElementById('quiz-progress-bar').style.width = pct + '%';
+  document.getElementById('quiz-question').textContent = q.question_text;
+
+  const grid = document.getElementById('quiz-options');
+  grid.innerHTML = ['A','B','C','D'].map(opt => `
+    <button class="opt-btn ${q.user_answer === opt ? 'selected' : ''}"
+            data-opt="${opt}"
+            onclick="selectAnswer('${opt}')">
+      <span class="opt-badge">${opt}</span>
+      <span>${q.options[opt]}</span>
+    </button>
+  `).join('');
+
+  const isLast = state.currentIdx === total - 1;
+  document.getElementById('prev-btn').disabled = state.currentIdx === 0;
+  document.getElementById('next-btn').style.display = isLast ? 'none' : '';
+  document.getElementById('submit-btn').style.display = isLast ? '' : 'none';
+
+  const hintBtn = document.getElementById('hint-btn');
+  hintBtn.disabled = false;
+  hintBtn.innerHTML = '💡 Gợi ý AI';
+}
+
+function selectAnswer(opt) {
+  state.questions[state.currentIdx].user_answer = opt;
+  renderQuestion();
+}
+
+function prevQuestion() {
+  if (state.currentIdx > 0) { state.currentIdx--; renderQuestion(); }
+}
+
+function nextQuestion() {
+  if (state.currentIdx < state.questions.length - 1) { state.currentIdx++; renderQuestion(); }
+}
+
+function confirmExit() {
+  if (confirm('Thoát khỏi bài quiz?')) showScreen('home');
+}
+
+/* ═══════════════════════════════════════════
+   SUBMIT
+═══════════════════════════════════════════ */
+function submitQuiz() {
+  const correct = state.questions.filter(q => q.user_answer === q.correct_answer).length;
+  const total = state.questions.length;
+  const pct = total ? (correct / total * 100).toFixed(1) : 0;
+  document.getElementById('result-score').textContent = `${correct}/${total}`;
+  document.getElementById('result-pct').textContent = `${pct}% — ${scoreLabel(pct)}`;
+  showScreen('result');
+}
+
+function scoreLabel(pct) {
+  if (pct >= 90) return '🏆 Xuất sắc!';
+  if (pct >= 70) return '👍 Tốt!';
+  if (pct >= 50) return '📚 Cần luyện thêm';
+  return '💪 Cố gắng lên!';
+}
+
+/* ═══════════════════════════════════════════
+   SAVE QUIZ
+═══════════════════════════════════════════ */
+async function saveCurrentQuiz() {
+  if (state.quizId) { toast('Quiz này đã được lưu rồi!', 'success'); return; }
+  const title = prompt('Nhập tên cho quiz:', state.quizTitle || 'Quiz TOEIC');
+  if (!title) return;
+  const r = await fetch('/api/save', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({title, questions: state.questions})
+  });
+  const d = await r.json();
+  if (d.ok) {
+    state.quizId = d.quiz_id;
+    state.quizTitle = title;
+    toast('✅ Đã lưu quiz!', 'success');
+  }
+}
+
+/* ═══════════════════════════════════════════
+   REVIEW
+═══════════════════════════════════════════ */
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  if (name === 'review') renderReview();
+  window.scrollTo(0, 0);
+}
+
+function renderReview() {
+  const list = document.getElementById('review-list');
+  list.innerHTML = state.questions.map((q, i) => {
+    const isCorrect = q.user_answer === q.correct_answer;
+    const opts = ['A','B','C','D'].map(opt => {
+      let cls = 'opt-btn disabled';
+      if (opt === q.correct_answer) cls += ' correct';
+      else if (opt === q.user_answer && !isCorrect) cls += ' wrong';
+      return `<button class="${cls}" data-opt="${opt}" style="margin-bottom:8px;">
+        <span class="opt-badge">${opt}</span>
+        <span>${q.options[opt]}${opt === q.correct_answer ? ' ✓' : ''}${opt === q.user_answer && !isCorrect ? ' ✗' : ''}</span>
+      </button>`;
+    }).join('');
+
+    const explainBtn = !isCorrect && q.user_answer
+      ? `<button class="btn btn-orange btn-sm mt-sm" onclick="requestExplain(${i})" style="width:auto;">📖 Giải thích</button>`
+      : '';
+
+    return `<div class="review-q">
+      <div class="review-q-header">
+        Q${i+1}. ${q.question_text}
+        <span class="${isCorrect ? 'badge-correct' : 'badge-wrong'}">${isCorrect ? '✓ Đúng' : '✗ Sai'}</span>
+      </div>
+      <div class="options-grid">${opts}</div>
+      ${explainBtn}
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════
+   AI
+═══════════════════════════════════════════ */
+async function requestHint() {
+  const btn = document.getElementById('hint-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Đang hỏi AI...';
+  const q = state.questions[state.currentIdx];
+  const r = await fetch('/api/hint', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({question_text: q.question_text, options: q.options})
+  });
+  const d = await r.json();
+  btn.disabled = false;
+  btn.innerHTML = '💡 Gợi ý AI';
+  openModal('modal-ai', '💡 Gợi ý', d.result);
+}
+
+async function requestExplain(idx) {
+  const q = state.questions[idx];
+  openModal('modal-ai', '📖 Đang tải giải thích...', 'Đang hỏi AI...');
+  const r = await fetch('/api/explain', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      question_text: q.question_text,
+      options: q.options,
+      correct: q.correct_answer,
+      user_ans: q.user_answer
+    })
+  });
+  const d = await r.json();
+  document.getElementById('modal-ai-title').textContent = '📖 Giải thích';
+  document.getElementById('modal-ai-content').textContent = d.result;
+}
+
+/* ═══════════════════════════════════════════
+   EDIT SCREEN
+═══════════════════════════════════════════ */
+function renderEditScreen() {
+  document.getElementById('edit-title-label').textContent = `✏️ ${state.editQuizTitle}`;
+  const list = document.getElementById('edit-list');
+  list.innerHTML = state.editQuestions.map((q, i) => `
+    <div class="edit-q-card">
+      <div class="edit-q-header">
+        <span class="edit-q-num">Q${i+1}</span>
+        <span class="edit-q-text">${q.question_text}</span>
+        <button class="btn btn-ghost btn-sm" onclick="openEditQ(${i})" style="flex-shrink:0;">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteEditQ(${i})" style="flex-shrink:0;">🗑️</button>
+      </div>
+      <div class="edit-q-opts">
+        ${['A','B','C','D'].map(opt => `
+          <span class="edit-opt-tag ${opt === q.correct_answer ? 'correct-tag' : ''}">
+            ${opt === q.correct_answer ? '✓ ' : ''}(${opt}) ${q.options[opt]}
+          </span>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function openEditQ(idx) {
+  const q = state.editQuestions[idx];
+  document.getElementById('edit-q-idx').value = idx;
+  document.getElementById('edit-q-qtext').value = q.question_text;
+  document.getElementById('edit-q-A').value = q.options['A'];
+  document.getElementById('edit-q-B').value = q.options['B'];
+  document.getElementById('edit-q-C').value = q.options['C'];
+  document.getElementById('edit-q-D').value = q.options['D'];
+  document.getElementById('edit-q-correct').value = q.correct_answer;
+  document.getElementById('modal-edit-q').classList.add('open');
+}
+
+function saveEditedQuestion() {
+  const idx = parseInt(document.getElementById('edit-q-idx').value);
+  const qt = document.getElementById('edit-q-qtext').value.trim();
+  const optA = document.getElementById('edit-q-A').value.trim();
+  const optB = document.getElementById('edit-q-B').value.trim();
+  const optC = document.getElementById('edit-q-C').value.trim();
+  const optD = document.getElementById('edit-q-D').value.trim();
+  const correct = document.getElementById('edit-q-correct').value;
+  if (!qt || !optA || !optB || !optC || !optD) { toast('Điền đầy đủ thông tin!', 'error'); return; }
+  state.editQuestions[idx] = {
+    ...state.editQuestions[idx],
+    question_text: qt,
+    options: {A: optA, B: optB, C: optC, D: optD},
+    correct_answer: correct
+  };
+  closeModal('modal-edit-q');
+  renderEditScreen();
+  toast('Đã cập nhật câu hỏi', 'success');
+}
+
+function deleteEditQ(idx) {
+  if (!confirm(`Xóa câu Q${idx+1}?`)) return;
+  state.editQuestions.splice(idx, 1);
+  state.editQuestions.forEach((q, i) => q.id = i + 1);
+  renderEditScreen();
+  toast('Đã xóa câu hỏi', 'success');
+}
+
+async function addQuestion() {
+  const text = document.getElementById('new-q-text').value.trim();
+  if (!text) { toast('Nhập câu hỏi vào!', 'error'); return; }
+  const r = await fetch('/api/parse', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({text})
+  });
+  const d = await r.json();
+  if (!d.ok) { alert('Lỗi parse:\n' + d.errors.join('\n')); return; }
+  d.questions.forEach(q => {
+    q.id = state.editQuestions.length + 1;
+    state.editQuestions.push(q);
+  });
+  document.getElementById('new-q-text').value = '';
+  renderEditScreen();
+  toast(`Đã thêm ${d.questions.length} câu hỏi`, 'success');
+}
+
+async function saveEditedQuiz() {
+  if (!state.editQuestions.length) { toast('Quiz phải có ít nhất 1 câu!', 'error'); return; }
+  const r = await fetch('/api/save', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      title: state.editQuizTitle,
+      questions: state.editQuestions,
+      quiz_id: state.editQuizId
+    })
+  });
+  const d = await r.json();
+  if (d.ok) {
+    toast('✅ Đã lưu thay đổi!', 'success');
+    setTimeout(() => showScreen('home'), 800);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   MODAL
+═══════════════════════════════════════════ */
+function openModal(id, title, content) {
+  document.getElementById('modal-ai-title').textContent = title;
+  document.getElementById('modal-ai-content').textContent = content;
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+/* ═══════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════ */
+let toastTimer;
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast ${type} show`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
